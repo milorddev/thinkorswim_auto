@@ -1,4 +1,5 @@
 import pyautogui as pg
+import time
 
 #autoSendTrue()
 #autoSendFalse()
@@ -7,6 +8,10 @@ import pyautogui as pg
 
 isAutoSend = False
 
+interval = ['today','WTD','1 day','2 day','3 day','4 day','5 day','10 day','15 day',
+            '20 day','30 day','90 day','180 day','360 day','YTD','1 month',
+            '3 month','6 month','9 month','1 year','2 year','3 year','4 year',
+            '5 year','10 year','15 year','20 year','max']
 
 def filler():
     pass
@@ -28,6 +33,24 @@ def checkAmount(func=filler):
             sellMarket()
         elif result == "flat":
             return "flat"
+
+def setChart(type):
+    x,y = pg.locateCenterOnScreen("img/settingsBtn.png")
+    pg.click(x,y)
+    time.sleep(1)
+    x,y = pg.locateCenterOnScreen("img/timeAxisBtn.png")
+    pg.click(x,y)
+    time.sleep(0.3)
+    x,y = pg.locateCenterOnScreen("img/aggregationType.png")
+    pg.click(x+100,y)
+    pg.press(['up','up','up'])
+    if type.lower() == 'time':
+        pg.press('down')
+    elif type.lower() == 'range':
+        pg.press(['down','down'])
+    pg.click(x,y)
+    
+        
 
 def buyMarket():
     global isAutoSend;

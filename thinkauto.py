@@ -13,6 +13,8 @@ interval = ['today','WTD','1 day','2 day','3 day','4 day','5 day','10 day','15 d
             '3 month','6 month','9 month','1 year','2 year','3 year','4 year',
             '5 year','10 year','15 year','20 year','max']
 
+dayPeriod = ['day','2 day','3 day','4 day','week ','month']
+
 def filler():
     pass
 
@@ -34,7 +36,11 @@ def checkAmount(func=filler):
         elif result == "flat":
             return "flat"
 
-def setChart(type):
+def setChart(type='time' , inti='5 day', period='0001'):
+    type = str(type)
+    inti = str(inti)
+    period = str(period)
+    global interval
     x,y = pg.locateCenterOnScreen("img/settingsBtn.png")
     pg.click(x,y)
     time.sleep(1)
@@ -49,6 +55,47 @@ def setChart(type):
     elif type.lower() == 'range':
         pg.press(['down','down'])
     pg.click(x,y)
+
+    x,y = pg.locateCenterOnScreen("img/timeInterval.png")
+    pg.click(x+100,y)
+    pg.press(['pgup','pgup','pgup'])
+    count = 0;
+    for index,i in enumerate(interval):
+        if inti in i:
+            count = index
+            break
+    print(count)
+    for i in range(count):
+        pg.press('down')
+    pg.click(x,y)
+
+    global dayPeriod;
+    x,y = pg.locateCenterOnScreen("img/aggregationPeriod.png")
+    pg.click(x+100,y)
+    #in the years section
+    if count > 13:
+        periodCount = 0
+        pg.press(['pgup','pgup','pgup'])
+        for index, i in enumerate(dayPeriod):
+            if period in i:
+                periodCount = index
+                break
+        for i in range(periodCount):
+            pg.press('down')
+    else:
+        pg.press(['right','right','right','right','right'])
+        pg.press(['backspace','backspace','backspace','backspace','backspace'])
+        pg.typewrite(period)
+        pg.press('enter')
+    pg.click(x,y)
+
+    x,y = pg.locateCenterOnScreen("img/okSettings.png")
+    pg.click(x,y)
+    print("settings saved")
+
+    
+    
+    
     
         
 

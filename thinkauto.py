@@ -5,6 +5,13 @@ import time
 #autoSendFalse()
 #findDirWords()
 #FindDirColor()
+#magnify(numOfRepeats)
+#unmagnify(numofRepeats)
+#checkAmount()
+#setChart(type,interval,period)
+#buyMarket()
+#sellMarket()
+#flattenTrade()
 
 isAutoSend = False
 
@@ -15,8 +22,64 @@ interval = ['today','WTD','1 day','2 day','3 day','4 day','5 day','10 day','15 d
 
 dayPeriod = ['day','2 day','3 day','4 day','week ','month']
 
+think = pg.getWindow("thinkorswim [build 1912]")
+
+
 def filler():
     pass
+
+
+def checkStrategy():
+    global think;
+    pos = think.get_position()
+    try:
+        buyx,buyy = pg.locateCenterOnScreen('img/buysignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
+                                                                         pos[1]+(pos[3]-pos[1])*0.1368,
+                                                                         (pos[2]-pos[0])*0.1287,
+                                                                         (pos[3]-pos[1])*0.8189))
+        if buyx:
+            print("buy signal!",buyx,buyy)
+            currentDir = checkAmount()
+            if currentDir == "negOne":
+                print("reversing!")
+                reverseTrade()
+            elif currentDir == "posOne":
+                print("do nothing, already that direction")
+            elif currentDir == "flat":
+                print("not in, buy")
+                buyMarket()       
+    except:
+        try:
+            sellx,selly = pg.locateCenterOnScreen('img/sellsignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
+                                                                             pos[1]+(pos[3]-pos[1])*0.1368,
+                                                                             (pos[2]-pos[0])*0.1287,
+                                                                             (pos[3]-pos[1])*0.8189))
+            if sellx:
+                print("sell signal!",sellx,selly)
+                currentDir = checkAmount()
+                if currentDir == "posOne":
+                    print("reversing!")
+                    reverseTrade()
+                elif currentDir == "negOne":
+                    print("do nothing, already that direction")
+                elif currentDir == "flat":
+                    print("not in, sell")
+                    sellMarket()
+
+        except:
+            print("nothing there")
+
+
+def magnify(times=1):
+    x,y = pg.locateCenterOnScreen('img/magnifyBtn.png')
+    for i in range(times):
+        pg.click(x,y)
+
+def unmagnify(times=1):
+    x,y = pg.locateCenterOnScreen('img/unmagnifyBtn.png')
+    for i in range(times):
+        pg.click(x,y)
+        
 
 def checkAmount(func=filler):
     if pg.locateOnScreen("img/negone.png"):
@@ -29,10 +92,12 @@ def checkAmount(func=filler):
             print("more than one positive probably, reset")
             flattenTrade()
             buyMarket()
+            return "posOne"
         elif result == "short":
             print("more than one short probably, reset")
             flattenTrade()
             sellMarket()
+            return "negOne"
         elif result == "flat":
             return "flat"
 
@@ -95,7 +160,14 @@ def setChart(type='time' , inti='5 day', period='0001'):
 
     
     
-    
+def reverseTrade():
+    global isAutoSend;
+    if isAutoSend == False:
+        autoSendTrue(reverseTrade)
+        return        
+    x,y = pg.locateCenterOnScreen("img/reverseBtn.png")
+    pg.click(x,y)
+    print("REVERSE")    
     
         
 

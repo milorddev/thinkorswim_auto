@@ -24,13 +24,16 @@ dayPeriod = ['day','2 day','3 day','4 day','week ','month']
 
 think = pg.getWindow("thinkorswim [build 1912]")
 
+loop = True
+sleepTime = 10
+
 
 def filler():
     pass
 
-
 def checkStrategy():
     global think;
+    magnify(8)
     pos = think.get_position()
     try:
         buyx,buyy = pg.locateCenterOnScreen('img/buysignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
@@ -70,16 +73,30 @@ def checkStrategy():
             print("nothing there")
 
 
+
+
 def magnify(times=1):
-    x,y = pg.locateCenterOnScreen('img/magnifyBtn.png')
-    for i in range(times):
-        pg.click(x,y)
+    pos = think.get_position()    
+    try:
+        x,y = pg.locateCenterOnScreen('img/magnifyBtn.png', region=(pos[0],
+                                                            pos[1]+(pos[3]-pos[1])*0.80,
+                                                            pos[2]-pos[0],
+                                                            (pos[3]-pos[1])*0.20))
+        for i in range(times):
+            pg.click(x,y)
+    except:
+        print("already max mag")
 
 def unmagnify(times=1):
-    x,y = pg.locateCenterOnScreen('img/unmagnifyBtn.png')
-    for i in range(times):
-        pg.click(x,y)
-        
+    try:
+        x,y = pg.locateCenterOnScreen('img/unmagnifyBtn.png', region=(pos[0],
+                                                            pos[1]+(pos[3]-pos[1])*0.80,
+                                                            pos[2]-pos[0],
+                                                            (pos[3]-pos[1])*0.20))
+        for i in range(times):
+            pg.click(x,y)
+    except:
+        print("already max unmag")            
 
 def checkAmount(func=filler):
     if pg.locateOnScreen("img/negone.png"):
@@ -263,4 +280,11 @@ def autoSendFalse(func=filler):
         else:
             accessDropDown(autoSendFalse)
     func()
-        
+
+
+
+while(loop):
+    checkStrategy()
+    time.sleep(sleepTime)
+
+

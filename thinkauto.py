@@ -1,5 +1,6 @@
 import pyautogui as pg
 import time
+import datetime
 
 #autoSendTrue()
 #autoSendFalse()
@@ -25,14 +26,15 @@ dayPeriod = ['day','2 day','3 day','4 day','week ','month']
 think = pg.getWindow("thinkorswim [build 1912]")
 
 loop = True
-sleepTime = 10
+sleepTime = 15
 
+trades = []
 
 def filler():
     pass
 
 def checkStrategy():
-    global think;
+    global think,trades;
     magnify(8)
     pos = think.get_position()
     try:
@@ -46,11 +48,15 @@ def checkStrategy():
             if currentDir == "negOne":
                 print("reversing!")
                 reverseTrade()
+                tradestring = "BUY +1 at " + str(datetime.datetime.now()).split('.')[0]
+                trades.append(tradestring)
             elif currentDir == "posOne":
                 print("do nothing, already that direction")
             elif currentDir == "flat":
                 print("not in, buy")
-                buyMarket()       
+                buyMarket()
+                tradestring = "BUY +1 at " + str(datetime.datetime.now()).split('.')[0]
+                trades.append(tradestring)
     except:
         try:
             sellx,selly = pg.locateCenterOnScreen('img/sellsignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
@@ -63,11 +69,15 @@ def checkStrategy():
                 if currentDir == "posOne":
                     print("reversing!")
                     reverseTrade()
+                    tradestring = "SELL +1 at " + str(datetime.datetime.now()).split('.')[0]
+                    trades.append(tradestring)
                 elif currentDir == "negOne":
                     print("do nothing, already that direction")
                 elif currentDir == "flat":
                     print("not in, sell")
                     sellMarket()
+                    tradestring = "SELL +1 at " + str(datetime.datetime.now()).split('.')[0]
+                    trades.append(tradestring)
 
         except:
             print("nothing there")
@@ -282,9 +292,11 @@ def autoSendFalse(func=filler):
     func()
 
 
+def startTrading():
+    global loop,sleepTime
+    while(loop):
+        print(str(datetime.datetime.now()).split('.')[0])
+        checkStrategy()
+        time.sleep(sleepTime)
 
-while(loop):
-    checkStrategy()
-    time.sleep(sleepTime)
-
-
+startTrading()

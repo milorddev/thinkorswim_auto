@@ -23,10 +23,11 @@ interval = ['today','WTD','1 day','2 day','3 day','4 day','5 day','10 day','15 d
 
 dayPeriod = ['day','2 day','3 day','4 day','week ','month']
 
-think = pg.getWindow("thinkorswim [build 1912]")
+#check build number if incorrect think.get_position()
+think = pg.getWindow("thinkorswim [build 1920]")
 
 loop = True
-sleepTime = 15
+sleepTime = 1
 
 trades = []
 
@@ -80,7 +81,29 @@ def checkStrategy():
                     trades.append(tradestring)
 
         except:
-            print("nothing there")
+            try:
+                flatx,flaty = pg.locateCenterOnScreen('img/flattensignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
+                                                                                 pos[1]+(pos[3]-pos[1])*0.1368,
+                                                                                 (pos[2]-pos[0])*0.1287,
+                                                                                 (pos[3]-pos[1])*0.8189))
+                if flatx:
+                    print("flatten signal!",flatx,flaty)
+                    currentDir = checkAmount()
+                    if currentDir == "posOne":
+                        print("flattening!")
+                        flattenTrade()
+                        tradestring = "FLAT at " + str(datetime.datetime.now()).split('.')[0]
+                        trades.append(tradestring)
+                    elif currentDir == "negOne":
+                        print("flattening!")
+                        flattenTrade()
+                        tradestring = "FLAT at " + str(datetime.datetime.now()).split('.')[0]
+                        trades.append(tradestring)
+                    elif currentDir == "flat":
+                        print("do nothing, already flattened")
+
+            except:
+                print("nothing there")
 
 
 

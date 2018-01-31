@@ -2,6 +2,10 @@ import pyautogui as pg
 import time
 import datetime
 
+from PIL import Image
+import pyocr
+import pyocr.builders
+
 #autoSendTrue()
 #autoSendFalse()
 #findDirWords()
@@ -25,7 +29,7 @@ dayPeriod = ['day','2 day','3 day','4 day','week ','month']
 
 #check build number if incorrect think.get_position()
 think = pg.getWindow("thinkorswim [build 1920]")
-
+threshold = 99
 loop = True
 sleepTime = 1
 
@@ -34,71 +38,101 @@ trades = []
 def filler():
     pass
 
+def recordLog(input):
+    input += "\n"
+    with open("tradeLogs.csv", "a") as file:
+        file.write(input)
+
+def getEntryPrice():
+    x,y = pg.locateCenterOnScreen('img/avgPrice.png')
+    img = pg.screenshot(region=(x + 18,y - 12,60,20))
+    img = img.convert('L')
+    width, height = img.size
+    img = img.resize((width*2,height*2),Image.ANTIALIAS)
+    #img = img.point(lambda p:p > threshold and 255)
+
+    tools = pyocr.get_available_tools()[0]
+    text = tools.image_to_string(img,builder=pyocr.builders.DigitBuilder())
+    return text
+
+
 def checkStrategy():
     global think,trades;
     magnify(8)
     pos = think.get_position()
+    reg = (round(pos[0]+(pos[2]-pos[0])*0.5416),
+           round(pos[1]+(pos[3]-pos[1])*0.1768),
+           round((pos[2]-pos[0])*0.1287),
+           round((pos[3]-pos[1])*0.7889))
+    print(reg)
+    #img = pg.screenshot(region=reg)
+    #img.show()
     try:
-        buyx,buyy = pg.locateCenterOnScreen('img/buysignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
-                                                                         pos[1]+(pos[3]-pos[1])*0.1368,
-                                                                         (pos[2]-pos[0])*0.1287,
-                                                                         (pos[3]-pos[1])*0.8189))
+        buyx,buyy = pg.locateCenterOnScreen('img/buysignal.png', region=reg)
         if buyx:
             print("buy signal!",buyx,buyy)
+            #im = pg.screenshot(region=(buyx-10,buyy-10,30,30))
+            #im.show()
             currentDir = checkAmount()
             if currentDir == "negOne":
                 print("reversing!")
                 reverseTrade()
-                tradestring = "BUY +1 at " + str(datetime.datetime.now()).split('.')[0]
+                price = getEntryPrice()
+                tradestring = str(datetime.datetime.now()).split('.')[0] + ",BUY,1," + price
                 trades.append(tradestring)
+                recordLog(tradestring)
             elif currentDir == "posOne":
                 print("do nothing, already that direction")
             elif currentDir == "flat":
                 print("not in, buy")
                 buyMarket()
-                tradestring = "BUY +1 at " + str(datetime.datetime.now()).split('.')[0]
+                price = getEntryPrice()
+                tradestring = str(datetime.datetime.now()).split('.')[0] + ",BUY,1," + price
                 trades.append(tradestring)
+                recordLog(tradestring)
     except:
         try:
-            sellx,selly = pg.locateCenterOnScreen('img/sellsignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
-                                                                             pos[1]+(pos[3]-pos[1])*0.1368,
-                                                                             (pos[2]-pos[0])*0.1287,
-                                                                             (pos[3]-pos[1])*0.8189))
+            sellx,selly = pg.locateCenterOnScreen('img/sellsignal.png', region= reg)
             if sellx:
                 print("sell signal!",sellx,selly)
                 currentDir = checkAmount()
                 if currentDir == "posOne":
                     print("reversing!")
                     reverseTrade()
-                    tradestring = "SELL +1 at " + str(datetime.datetime.now()).split('.')[0]
+                    price = getEntryPrice()
+                    tradestring = str(datetime.datetime.now()).split('.')[0] + ",SELL,-1," + price
                     trades.append(tradestring)
+                    recordLog(tradestring)
                 elif currentDir == "negOne":
                     print("do nothing, already that direction")
                 elif currentDir == "flat":
                     print("not in, sell")
                     sellMarket()
-                    tradestring = "SELL +1 at " + str(datetime.datetime.now()).split('.')[0]
+                    price = getEntryPrice()
+                    tradestring = str(datetime.datetime.now()).split('.')[0] + ",SELL,-1," + price
                     trades.append(tradestring)
+                    recordLog(tradestring)
 
         except:
             try:
-                flatx,flaty = pg.locateCenterOnScreen('img/flattensignal.png', region=(pos[0]+(pos[2]-pos[0])*0.5416,
-                                                                                 pos[1]+(pos[3]-pos[1])*0.1368,
-                                                                                 (pos[2]-pos[0])*0.1287,
-                                                                                 (pos[3]-pos[1])*0.8189))
+                flatx,flaty = pg.locateCenterOnScreen('img/flattensignal.png', region= reg)
                 if flatx:
                     print("flatten signal!",flatx,flaty)
                     currentDir = checkAmount()
                     if currentDir == "posOne":
                         print("flattening!")
                         flattenTrade()
-                        tradestring = "FLAT at " + str(datetime.datetime.now()).split('.')[0]
+                        price = "N/A"
+                        tradestring = str(datetime.datetime.now()).split('.')[0] + ",FLAT,0," + price
                         trades.append(tradestring)
+                        recordLog(tradestring)
                     elif currentDir == "negOne":
                         print("flattening!")
                         flattenTrade()
-                        tradestring = "FLAT at " + str(datetime.datetime.now()).split('.')[0]
+                        price = "N/A"
+                        tradestring = str(datetime.datetime.now()).split('.')[0] + ",FLAT,0," + price
                         trades.append(tradestring)
+                        recordLog(tradestring)
                     elif currentDir == "flat":
                         print("do nothing, already flattened")
 
@@ -111,10 +145,7 @@ def checkStrategy():
 def magnify(times=1):
     pos = think.get_position()    
     try:
-        x,y = pg.locateCenterOnScreen('img/magnifyBtn.png', region=(pos[0],
-                                                            pos[1]+(pos[3]-pos[1])*0.80,
-                                                            pos[2]-pos[0],
-                                                            (pos[3]-pos[1])*0.20))
+        x,y = pg.locateCenterOnScreen('img/magnifyBtn.png')
         for i in range(times):
             pg.click(x,y)
     except:
@@ -122,10 +153,7 @@ def magnify(times=1):
 
 def unmagnify(times=1):
     try:
-        x,y = pg.locateCenterOnScreen('img/unmagnifyBtn.png', region=(pos[0],
-                                                            pos[1]+(pos[3]-pos[1])*0.80,
-                                                            pos[2]-pos[0],
-                                                            (pos[3]-pos[1])*0.20))
+        x,y = pg.locateCenterOnScreen('img/unmagnifyBtn.png')
         for i in range(times):
             pg.click(x,y)
     except:
@@ -317,6 +345,8 @@ def autoSendFalse(func=filler):
 
 def startTrading():
     global loop,sleepTime
+    recordLog("BEGIN AUTOTRADING AT: " + str(datetime.datetime.now()).split('.')[0])
+    #checkStrategy()
     while(loop):
         print(str(datetime.datetime.now()).split('.')[0])
         checkStrategy()
